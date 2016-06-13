@@ -457,7 +457,7 @@ public class TZStackView: UIView {
             stackViewConstraints += createFirstAndLastViewMatchEdgesContraints()
             stackViewConstraints += createCanvasFitConstraints()
             
-            let visibleArrangedSubviews = arrangedSubviews.filter({!self.isHidden($0)})
+            let visibleArrangedSubviews = arrangedSubviews.filter(negate(isHidden))
             
             switch distribution {
             case .FillEqually, .Fill, .FillProportionally:
@@ -487,7 +487,7 @@ public class TZStackView: UIView {
             case .EqualSpacing:
                 var views = [UIView]()
 
-                for (index, arrangedSubview) in arrangedSubviews.filter({ !isHidden($0) }).enumerate() {
+                for (index, arrangedSubview) in arrangedSubviews.filter(negate(isHidden)).enumerate() {
                     if index > 0 {
                         let spacerView = addSpacerView("TZSV-distributing")
                         distributionSpacers.append(spacerView)
@@ -778,9 +778,9 @@ public class TZStackView: UIView {
         let constraints: [NSLayoutConstraint]
         switch axis {
         case .Horizontal:
-            constraints = equalAttributes(views: views.filter({ !self.isHidden($0) }), attribute: .Width, priority: priority)
+            constraints = equalAttributes(views: views.filter(negate(isHidden)), attribute: .Width, priority: priority)
         case .Vertical:
-            constraints = equalAttributes(views: views.filter({ !self.isHidden($0) }), attribute: .Height, priority: priority)
+            constraints = equalAttributes(views: views.filter(negate(isHidden)), attribute: .Height, priority: priority)
         }
         constraints.forEach { $0.identifier = identifier }
         return constraints
@@ -907,7 +907,7 @@ public class TZStackView: UIView {
         
         var constraints = [NSLayoutConstraint]()
         
-        let visibleViews = arrangedSubviews.filter({!self.isHidden($0)})
+        let visibleViews = arrangedSubviews.filter(negate(isHidden))
         let firstView = visibleViews.first
         let lastView = visibleViews.last
         
