@@ -202,7 +202,7 @@ public class TZStackView: UIView {
     }
     
     private func addHiddenListener(view: UIView) {
-        view.addObserver(self, forKeyPath: "hidden", options: [.Old, .New], context: &hiddenKVOContext)
+        view.addObserver(self, forKeyPath: "hidden", options: .New, context: &hiddenKVOContext)
         registeredKvoSubviews.append(view)
     }
     
@@ -215,11 +215,10 @@ public class TZStackView: UIView {
 
     public override func observeValueForKeyPath(keyPath: String?, ofObject object: AnyObject?, change: [String : AnyObject]?, context: UnsafeMutablePointer<Void>) {
         if context == &hiddenKVOContext {
-            guard let
-                view = object as? UIView,
-                oldHidden = change?[NSKeyValueChangeOldKey] as? Bool,
+            guard
+                window != nil,
+                let view = object as? UIView,
                 hidden = change?[NSKeyValueChangeNewKey] as? Bool
-                where oldHidden != hidden
             else {
                 return
             }
