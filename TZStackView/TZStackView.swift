@@ -213,6 +213,15 @@ public class TZStackView: UIView {
         }
     }
 
+    public override func willMoveToWindow(newWindow: UIWindow?) {
+        if newWindow != nil {
+            setNeedsUpdateConstraints()
+            setNeedsLayout()
+        }
+
+        super.willMoveToWindow(newWindow)
+    }
+
     public override func observeValueForKeyPath(keyPath: String?, ofObject object: AnyObject?, change: [String : AnyObject]?, context: UnsafeMutablePointer<Void>) {
         if context == &hiddenKVOContext {
             guard
@@ -225,14 +234,14 @@ public class TZStackView: UIView {
 
             let hiddenCallbackKey = "TZSV-hidden-callback"
 
-            let previouseKeys = Set(view.layer.animationKeys() ?? [])
-            
+            let previousKeys = Set(view.layer.animationKeys() ?? [])
+
             if let callbackAnimation = view.layer.animationForKey(hiddenCallbackKey) {
                 (callbackAnimation.delegate as! TZFuncAnimationDelegate).cancel(callbackAnimation)
                 view.layer.removeAnimationForKey(hiddenCallbackKey)
             }
-            
-            // Canceling the previouse callback will reset the hidden property, so we set it back without triggering KVO
+
+            // Canceling the previous callback will reset the hidden property, so we set it back without triggering KVO
             view.layer.hidden = hidden
             if hidden {
                 animatingToHiddenViews.append(view)
@@ -244,13 +253,13 @@ public class TZStackView: UIView {
             layoutIfNeeded()
             
             let afterKeys = Set(view.layer.animationKeys() ?? [])
-            let addedKeys = afterKeys.subtract(previouseKeys)
-            
+            let addedKeys = afterKeys.subtract(previousKeys)
+
             view.layer.hidden = false // This will set view.hidden without triggering KVO
-            
-            let animationFinishFunc = { [weak self, weak view] () in
-                view?.layer.hidden = hidden
+
+            let animationFinishFunc = { [weak self, weak view] in
                 if let selv = self, strongView = view {
+                    strongView.layer.hidden = hidden
                     if let index = selv.animatingToHiddenViews.indexOf(strongView) {
                         selv.animatingToHiddenViews.removeAtIndex(index)
                     }
