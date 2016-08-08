@@ -1,6 +1,5 @@
 //
 //  TZStackViewInjector.m
-//  Pods
 //
 //  Created by André Braga on 04/08/16.
 //
@@ -18,18 +17,21 @@
 
 #pragma mark - Runtime Injection
 
+#define TARGET_CLASS_NAME "TZStackView"
+#define DESTINATION_CLASS_NAME "UIStackView"
+
 __asm(
       ".section        __DATA,__objc_classrefs,regular,no_dead_strip\n"
 #if	TARGET_RT_64_BIT
       ".align          3\n"
-      "L_OBJC_CLASS_UIStackView:\n"
-      ".quad           _OBJC_CLASS_$_UIStackView\n"
+      "L_OBJC_CLASS_"DESTINATION_CLASS_NAME":\n"
+      ".quad           _OBJC_CLASS_$_"DESTINATION_CLASS_NAME"\n"
 #else
       ".align          2\n"
-      "_OBJC_CLASS_UIStackView:\n"
-      ".long           _OBJC_CLASS_$_UIStackView\n"
+      "_OBJC_CLASS_"DESTINATION_CLASS_NAME":\n"
+      ".long           _OBJC_CLASS_$_"DESTINATION_CLASS_NAME"\n"
 #endif
-      ".weak_reference _OBJC_CLASS_$_UIStackView\n"
+      ".weak_reference _OBJC_CLASS_$_"DESTINATION_CLASS_NAME"\n"
 );
 
 static inline bool hasSuffix(const char *str, const char *suffix) {
@@ -53,14 +55,9 @@ static inline bool hasSuffix(const char *str, const char *suffix) {
 
 // Constructors are called after all classes have been loaded.
 __attribute__((constructor)) static void StackViewPatchEntry(void) {
-    #define TARGET_CLASS_NAME "TZStackView"
-    #define DESTINATION_CLASS_NAME "UIStackView"
-
-
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         @autoreleasepool {
-            // >= iOS9.
             if (objc_getClass(DESTINATION_CLASS_NAME)) {
                 return;
             }
@@ -90,15 +87,16 @@ __attribute__((constructor)) static void StackViewPatchEntry(void) {
             Class *classes = (__unsafe_unretained Class *)malloc(sizeof(Class) * numClasses);
             objc_getClassList(classes, numClasses);
 
+            // Needs to iterate classes in order to support modules
+            // Checks for full name match or suffix after a separating "."
             for (int i = 0; i < numClasses; i++) {
                 char *className = class_getName(classes[i]);
 
-                if (hasSuffix(className, TARGET_CLASS_NAME)) {
-                    if (strncmp(className, TARGET_CLASS_NAME, strlen(className)) == 0
-                        || strstr(className, "."TARGET_CLASS_NAME)) {
-                        injected = classes[i];
-                        break;
-                    }
+                if (hasSuffix(className, TARGET_CLASS_NAME)
+                    && (strncmp(className, TARGET_CLASS_NAME, strlen(className)) == 0
+                        || hasSuffix(className, "."TARGET_CLASS_NAME))) {
+                    injected = classes[i];
+                    break;
                 }
             }
             free(classes);
@@ -119,11 +117,9 @@ __attribute__((constructor)) static void StackViewPatchEntry(void) {
 #ifdef DEBUG
 
 #import <UIKit/UIKit.h>
-
-#import <UIKit/UIKit.h>
 #import <objc/runtime.h>
 
-@implementation UIView (FixViewDebugging)
+@implementation UIView (FixViewDebugging_iOS8Simulator)
 
 + (void)load
 {
